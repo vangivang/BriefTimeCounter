@@ -34,6 +34,11 @@ import javax.swing.JTextField;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+
 import timeme.bean.BriefBean;
 
 /**
@@ -81,8 +86,8 @@ public class TimeMe extends WindowAdapter {
 			public void actionPerformed(ActionEvent arg0) {
 				endTime = System.currentTimeMillis() - startTime;
 				startTime = System.currentTimeMillis();
-				selectedBriefBean.setEllapsedTime(endTime);
-				briefEllapsedTimeLabel.setText(selectedBriefBean.getEllapsedTime());
+				selectedBriefBean.setEllapsedTime(endTime); //So the brief remembers how much time has passed
+				briefEllapsedTimeLabel.setText(selectedBriefBean.getEllapsedTime()); //Set ellapsed time to screen each second
 			}
 		});
 
@@ -91,11 +96,11 @@ public class TimeMe extends WindowAdapter {
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.addWindowListener(this);
 		frame.getContentPane().setLayout(null);
-		frame.setTitle("TimeMe! V0.9 - Beta");
+		frame.setTitle("TimeMe! V0.92 - Beta");
+		frame.setResizable(false);
 		
 		logoLabel = new JLabel();
 		logoLabel.setBounds(245, 123, 90, 89);
-		//logoLabel.setIcon(new javax.swing.ImageIcon("res/red.png")); // NOI18N
 		logoLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/red.png"))); 
 		
 		
@@ -120,11 +125,11 @@ public class TimeMe extends WindowAdapter {
 				if (!lightTOF){
 					selectedBriefBean = (BriefBean) comboBox.getSelectedItem();
 					if (selectedBriefBean != null){
-						briefNameLabel.setText(selectedBriefBean.getName());
-						briefEllapsedTimeLabel.setText(String.valueOf(selectedBriefBean.getEllapsedTime()));
+						briefNameLabel.setText(selectedBriefBean.getName()); //Display name of selected brief
+						briefEllapsedTimeLabel.setText(String.valueOf(selectedBriefBean.getEllapsedTime())); //Display current ellapsed time of brief when selected from list
 					}else{
-						briefNameLabel.setText("####");
-						briefEllapsedTimeLabel.setText("00:00:00");
+						briefNameLabel.setText("####"); //Initial name (a new brief)
+						briefEllapsedTimeLabel.setText("00:00:00"); //Initial time (a new brief)
 					}
 				}else{
 					JOptionPane.showMessageDialog(null, "You canot do this. Press STOP first!");
@@ -216,7 +221,7 @@ public class TimeMe extends WindowAdapter {
 				}
 			}
 		});
-		btnSaveData.setBounds(10, 227, 115, 23);
+		btnSaveData.setBounds(10, 215, 115, 23);
 		frame.getContentPane().add(btnSaveData);
 		
 		JButton btnRemove = new JButton("REMOVE");
@@ -256,8 +261,43 @@ public class TimeMe extends WindowAdapter {
 				}
 			}
 		});
-		btnExportToTxt.setBounds(134, 227, 111, 23);
+		btnExportToTxt.setBounds(137, 215, 111, 23);
 		frame.getContentPane().add(btnExportToTxt);
+		
+		JButton btnExcell = new JButton("Excel");
+		btnExcell.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(lightTOF){
+					JOptionPane.showMessageDialog(null, "Press STOP first!");
+				}else{
+					HSSFWorkbook workbook = new HSSFWorkbook();
+					HSSFSheet sheet = workbook.createSheet("Sample sheet");
+					
+					int rownum = 0;
+					for (BriefBean bb : briefList){
+						Row row = sheet.createRow(rownum++);
+						Cell cellName = row.createCell(0);
+						Cell cellTime = row.createCell(1);
+						
+						Double longName = Double.parseDouble(bb.getName());
+						String time = bb.getEllapsedTimeForTxtFile();
+						cellName.setCellValue(longName);
+						cellTime.setCellValue(time);
+					}
+					
+					try {
+						FileOutputStream out = new FileOutputStream(new File("new.xls"));
+						workbook.write(out);
+						out.close();
+						JOptionPane.showMessageDialog(null, "Excell written successfully");
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(null, "Excell failed to write");
+					}
+				}
+			}
+		});
+		btnExcell.setBounds(10, 245, 115, 23);
+		frame.getContentPane().add(btnExcell);
 		
 	}
 
